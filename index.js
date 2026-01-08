@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const admin = require("firebase-admin");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
+const { error } = require("console");
 
 
 const app = express();
@@ -30,15 +31,21 @@ const max_players_column = "max_players";
 //#endregion
 
 
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || "";
+//const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || "";
 
-if (!serviceAccountPath)
+/*if (!serviceAccountPath)
 {
     throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_PATH");
-}
+}*/
 
-const serviceAccountRaw = fs.readFileSync(serviceAccountPath, "utf8");
+//const serviceAccountRaw = fs.readFileSync(serviceAccountPath, "utf8");
+const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
 const serviceAccount = JSON.parse(serviceAccountRaw);
+
+if (!serviceAccount)
+{
+    throw new Error("Missing Firebase Service Account!");
+}
 
 admin.initializeApp(
 {
