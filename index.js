@@ -156,9 +156,9 @@ app.post("/auth/register", async (req, res) =>
 {
     try
     {
-        const { email, username, password } = req.body;
+        const { email, username, password, playerName } = req.body;
 
-        if (!email || !username || !password)
+        if (!email || !username || !password || !playerName)
         {
             return res.status(400).json({ error: "Invalid payload" });
         }
@@ -177,6 +177,7 @@ app.post("/auth/register", async (req, res) =>
             email,
             username,
             passwordHash,
+            playerName,
             totalMatches: 0,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
         });
@@ -244,6 +245,7 @@ app.get("/profile/me", authenticate, async (req, res) =>
         {
             userId,
             username: data.username || "Player",
+            playerName: data.playerName,
             totalMatches: data.totalMatches || 0
         });
     }
@@ -404,3 +406,4 @@ app.listen(PORT, () =>
 {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
