@@ -226,6 +226,36 @@ app.post("/auth/login", async (req, res) =>
     }
 });
 
+app.post("/profile/update_playername", async (req, res) =>
+{
+    try
+    {
+        const { playerName } = req.body;
+        if (!playerName)
+        {
+            return res.status(400).json({ error: "Invalid payload" });
+        }
+        
+        const userId = req.user.userId;
+
+        const doc = await usersCol().doc(userId).get();
+        if (!doc.exists)
+        {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        user.playerName = playerName;
+
+        const token = generateToken({ userId });
+
+        res.json({ token });
+    }
+    catch
+    {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+
 
 app.get("/profile/me", authenticate, async (req, res) =>
 {
@@ -406,4 +436,5 @@ app.listen(PORT, () =>
 {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
