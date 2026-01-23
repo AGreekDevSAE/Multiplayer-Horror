@@ -226,7 +226,7 @@ app.post("/auth/login", async (req, res) =>
     }
 });
 
-app.post("/profile/update_playername", async (req, res) =>
+app.post("/profile/update_playername", authenticate, async (req, res) =>
 {
     try
     {
@@ -235,23 +235,18 @@ app.post("/profile/update_playername", async (req, res) =>
         {
             return res.status(400).json({ error: "Invalid payload" });
         }
-        
+
         const userId = req.user.userId;
 
-        const doc = await usersCol().doc(userId).get();
-        if (!doc.exists)
-        {
-            return res.status(404).json({ error: "User not found" });
-        }
+        await usersCol().doc(userId).update({
+            playerName
+        });
 
-        user.playerName = playerName;
-
-        const token = generateToken({ userId });
-
-        res.json({ token });
+        res.json({ success: true });
     }
-    catch
+    catch (err)
     {
+        console.error(err);
         res.status(500).json({ error: "Server error" });
     }
 });
@@ -328,22 +323,30 @@ app.post("/score", authenticate, async (req, res) =>
 
 app.get("/leaderboard", async (req, res) =>
 {
-    try
-    {
-        const snap = await scoresCol().orderBy("score", "desc").limit(10).get();
+    const snap = await scoresCol().get();
 
-        const rows = snap.docs.map((d) =>
+    const map = {};
+
+    snap.docs.forEach(d =>
+    {
+        const s = d.data();
+        if (!map[s.userId])
         {
-            const data = d.data();
-            return { userId: data.userId, score: data.score, team: data.team, won: data.won };
-        });
+            map[s.userId] =
+            {
+                userId: s.userId,
+                totalScore: 0,
+                wins: 0,
+                matches: 0
+            };
+        }
 
-        res.json(rows);
-    }
-    catch
-    {
-        res.status(500).json({ error: "Server error" });
-    }
+        map[s.userId].totalScore += s.score;
+        map[s.userId].matches += 1;
+        if (s.won) map[s.userId].wins += 1;
+    });
+
+    res.json(Object.values(map));
 });
 
 //#endregion
@@ -436,5 +439,6 @@ app.listen(PORT, () =>
 {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
