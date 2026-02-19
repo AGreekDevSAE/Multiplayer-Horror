@@ -323,30 +323,49 @@ app.post("/score", authenticate, async (req, res) =>
 
 app.get("/leaderboard", async (req, res) =>
 {
-    const snap = await scoresCol().get();
-
-    const map = {};
-
-    snap.docs.forEach(d =>
+    try
     {
-        const s = d.data();
-        if (!map[s.userId])
+        const scoresSnap = await scoresCol().get();
+        const usersSnap = await usersCol().get();
+
+        // Build userId -> playerName map
+        const usersMap = {};
+        usersSnap.docs.forEach(u =>
         {
-            map[s.userId] =
+            const data = u.data();
+            usersMap[u.id] = data.playerName || data.username || "Player";
+        });
+
+        const map = {};
+
+        scoresSnap.docs.forEach(d =>
+        {
+            const s = d.data();
+
+            if (!map[s.userId])
             {
-                userId: s.userId,
-                totalScore: 0,
-                wins: 0,
-                matches: 0
-            };
-        }
+                map[s.userId] =
+                {
+                    userId: s.userId,
+                    playerName: usersMap[s.userId] || "Unknown",
+                    totalScore: 0,
+                    wins: 0,
+                    matches: 0
+                };
+            }
 
-        map[s.userId].totalScore += s.score;
-        map[s.userId].matches += 1;
-        if (s.won) map[s.userId].wins += 1;
-    });
+            map[s.userId].totalScore += s.score;
+            map[s.userId].matches += 1;
+            if (s.won) map[s.userId].wins += 1;
+        });
 
-    res.json(Object.values(map));
+        res.json(Object.values(map));
+    }
+    catch (err)
+    {
+        console.error(err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 //#endregion
@@ -439,6 +458,7 @@ app.listen(PORT, () =>
 {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
