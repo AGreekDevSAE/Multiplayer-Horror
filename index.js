@@ -288,11 +288,11 @@ app.post("/score", authenticate, async (req, res) =>
     try
     {
         const userId = req.user.userId;
-        const { score, team, won } = req.body;
+        const { score, won } = req.body;
 
         const scoreNumber = Number(score);
 
-        if (!Number.isFinite(scoreNumber) || !team || typeof won !== "boolean")
+        if (!Number.isFinite(scoreNumber) || typeof won !== "boolean")
         {
             return res.status(400).json({ error: "Invalid payload" });
         }
@@ -302,7 +302,6 @@ app.post("/score", authenticate, async (req, res) =>
         await scoresCol().doc(scoreId).set(
         {
             userId,
-            team,
             score: scoreNumber,
             won,
             createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -320,6 +319,7 @@ app.post("/score", authenticate, async (req, res) =>
         res.status(500).json({ error: "Server error" });
     }
 });
+
 
 app.get("/leaderboard", async (req, res) =>
 {
@@ -439,6 +439,7 @@ app.listen(PORT, () =>
 {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
 
 
 
